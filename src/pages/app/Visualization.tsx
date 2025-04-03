@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import Box from '@mui/material/Box';
 import Typography from '@mui/joy/Typography';
@@ -50,7 +49,7 @@ const Visualization: React.FC = () => {
                     <Box display="flex" justifyContent="center" border={1} borderRadius={2} p={2}>
                         <PieChart width={300} height={300}>
                             <Pie data={classDistributionData} dataKey="value" cx="50%" cy="50%" outerRadius={100} label>
-                                {classDistributionData.map((entry, index) => (
+                                {classDistributionData.map((_, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>

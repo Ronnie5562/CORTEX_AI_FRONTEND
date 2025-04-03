@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import Box from '@mui/material/Box';
 import Typography from '@mui/joy/Typography';
