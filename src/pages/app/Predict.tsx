@@ -4,6 +4,9 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/joy/Typography';
 import Button from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
+import axios from 'axios';
+
+import { BASE_URL } from '../../config';
 
 // Styled box for image upload
 const UploadBox = styled(Box)(() => ({
@@ -43,7 +46,7 @@ const ScanLine = styled(Box)(({ scanning }: { scanning: boolean }) => ({
     height: '10px',
     backgroundColor: '#1976d2',
     boxShadow: '0 0 10px rgba(25, 118, 210, 0.7)',
-    animation: scanning ? 'scanAnimation 2s linear infinite' : 'none',
+    animation: scanning ? 'scanAnimation 1.5s linear infinite' : 'none',
     '@keyframes scanAnimation': {
         '0%': { top: 0 },
         '50%': { top: '90%' },
@@ -51,7 +54,7 @@ const ScanLine = styled(Box)(({ scanning }: { scanning: boolean }) => ({
     },
 }));
 
-const ResultBox = styled(Box)(() => ({
+const ResultBox = styled(Box)(({ prediction }: { prediction: string | null }) => ({
     width: '100%',
     height: '500px',
     display: 'flex',
@@ -60,11 +63,15 @@ const ResultBox = styled(Box)(() => ({
     marginTop: '16px',
     fontSize: '1.2rem',
     fontWeight: 'bold',
+    backgroundColor: prediction === 'NO' ? '#e8f5e9' : '#ffcccc',
+    color: prediction === 'NO' ? 'green' : 'red',
+    borderRadius: '8px',
 }));
 
 const Predict: React.FC = () => {
     const [image, setImage] = useState<File | null>(null);
     const [prediction, setPrediction] = useState<string | null>(null);
+    const [confidence, setConfidence] = useState<number | null>(null);
     const [scanning, setScanning] = useState(false);
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,17 +79,35 @@ const Predict: React.FC = () => {
         if (file) {
             setImage(file);
             setPrediction(null);
+            setConfidence(null);
         }
     };
 
-    const handlePredict = () => {
+    const handlePredict = async () => {
         if (image) {
-            setScanning(true);
-            setTimeout(() => {
-                setScanning(false);
-                const isTumor = Math.random() > 0.5;
-                setPrediction(isTumor ? 'Brain tumor detected' : 'No brain tumor detected');
-            }, 5000);
+            setScanning(true); // Keep scanning while waiting for response
+
+            const formData = new FormData();
+            formData.append('file', image);
+
+            try {
+                const response = await axios.post(
+                    `${BASE_URL}/predict`,
+                    formData,
+                    {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    }
+                );
+
+                const { prediction, confidence } = response.data;
+                setPrediction(prediction);
+                setConfidence(confidence * 100);
+            } catch (error) {
+                console.error('Prediction error:', error);
+                setPrediction('Error occurred');
+            } finally {
+                setScanning(false); // Stop scanning when response is received
+            }
         }
     };
 
@@ -100,11 +125,16 @@ const Predict: React.FC = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    width: prediction ? '100%' : 'auto',
+                    width: '100%',
                 }}
             >
                 <label htmlFor="upload-image" style={{ flex: 1, marginRight: '16px', position: 'relative' }}>
-                    <UploadBox>
+                    <UploadBox
+                        sx={{
+                            width: '100%',
+                            height: prediction ? '500px' : '70vh',
+                        }}
+                    >
                         {!image && <Typography>Upload Image</Typography>}
                         <input
                             id="upload-image"
@@ -126,22 +156,21 @@ const Predict: React.FC = () => {
                     </UploadBox>
                 </label>
                 {prediction && (
-                    <ResultBox
+                    <ResultBox prediction={prediction}
                         sx={{
-                            backgroundColor: prediction.includes('detected') ? '#ffcccc' : '#e8f5e9',
-                            color: prediction.includes('detected') ? 'red' : 'green',
-                            maxWidth: '50%',
-                            mt: -0.1,
-                            borderRadius: '8px',
+                            width: '50%',
+                            height: '500px',
+                            mt: -0.1
                         }}
                     >
-                        {prediction}
+                        {prediction === 'TUMOR' ? 'Brain Tumor Detected' : 'No Brain Tumor'} <br />
+                        Confidence: {confidence?.toFixed(2)}%
                     </ResultBox>
                 )}
             </Box>
             <Box sx={{ mt: 3, textAlign: 'center' }}>
-                <Button variant="contained" color="primary" onClick={handlePredict} disabled={!image}>
-                    Predict
+                <Button variant="contained" color="primary" onClick={handlePredict} disabled={!image || scanning}>
+                    {scanning ? 'Scanning...' : 'Predict'}
                 </Button>
             </Box>
         </DashboardLayout>
