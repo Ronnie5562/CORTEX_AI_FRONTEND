@@ -6,13 +6,13 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, Line
 
 // Demo Data
 const classDistributionData = [
-    { name: 'Tumor', value: 60 },
-    { name: 'No Tumor', value: 40 }
+    { name: 'Tumor', value: 50 },
+    { name: 'No Tumor', value: 50 }
 ];
 
 const sampleCountData = [
-    { name: 'Tumor', samples: 300 },
-    { name: 'No Tumor', samples: 200 }
+    { name: 'Tumor', samples: 1500 },
+    { name: 'No Tumor', samples: 1500 }
 ];
 
 const accuracyTrendData = [

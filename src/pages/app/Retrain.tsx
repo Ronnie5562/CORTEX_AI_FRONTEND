@@ -4,13 +4,17 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/joy/Typography';
 import Button from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
+import axios from 'axios';
+
+import { BASE_URL } from '../../config';
+
 
 const RetrainBox = styled(Box)(() => ({
     border: '2px dashed #1976d2',
     borderRadius: '8px',
     width: '100%',
     height: '200px',
-    display: 'flex',
+    // display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
@@ -24,13 +28,32 @@ const RetrainBox = styled(Box)(() => ({
 
 const Retrain: React.FC = () => {
     const [status, setStatus] = useState<string | null>(null);
+    const [jobId, setJobId] = useState<string | null>(null);
+    const [trainingData, setTrainingData] = useState<{
+        yes_images: number;
+        no_images: number;
+    } | null>(null);
 
-    const handleRetrain = () => {
+    const handleRetrain = async () => {
         setStatus('Retraining in progress...');
 
-        setTimeout(() => {
-            setStatus('Retraining completed successfully!');
-        }, 3000); // Simulating retraining process
+        try {
+            const response = await axios.post(`${BASE_URL}/retrain/`, null, {
+                params: {
+                    epochs: 2,
+                    batch_size: 10,
+                    learning_rate: 0.001,
+                },
+            });
+
+            const { message, job_id, training_data } = response.data;
+            setStatus(message);
+            setJobId(job_id);
+            setTrainingData(training_data);
+        } catch (error) {
+            setStatus('Error during retraining');
+            console.error('Retraining failed', error);
+        }
     };
 
     return (
@@ -46,6 +69,20 @@ const Retrain: React.FC = () => {
                 <Typography>
                     {status || 'Ready for retraining...'}
                 </Typography>
+
+                {jobId && (
+                    <Typography sx={{ mt: 2 }}>
+                        <strong>Job ID:</strong> {jobId}
+                    </Typography>
+                )}
+
+                {trainingData && (
+                    <Typography sx={{ mt: 2 }}>
+                        <strong>Training Data:</strong><br />
+                        Yes Images: {trainingData.yes_images}<br />
+                        No Images: {trainingData.no_images}
+                    </Typography>
+                )}
             </RetrainBox>
 
             <Box sx={{ mt: 3, textAlign: 'center' }}>
